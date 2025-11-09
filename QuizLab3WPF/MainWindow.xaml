@@ -1,0 +1,40 @@
+﻿<Window x:Class="QuizLab3WPF.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:QuizLab3WPF"
+        mc:Ignorable="d"
+        Title="MainWindow" Height="450" Width="800"
+        Background="Aqua">
+    <Grid>
+
+        <!-- column Dividing -->
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="300"/>
+            <ColumnDefinition Width="*"/>
+
+        </Grid.ColumnDefinitions>
+        <Border Grid.Column="0" Margin="20" Background="Gray" CornerRadius="15" BorderBrush="White" BorderThickness="5">
+            <StackPanel Margin="20" >
+                <TextBlock Name="MenuName" Text="Menu" FontSize="30" VerticalAlignment="Center" HorizontalAlignment="Center" FontWeight="Bold"/>
+                <Button Name="PlayButton" Content="Play Quiz" FontSize="20" Click="PlayButton_Click" Margin="0,5,0,5"/>
+                <Button Name="CreatButton" Content=" Create Quiz" FontSize="20" Click="CreatButton_Click" Margin="0,5,0,5"/>
+                <Button Name="EditButton" Content=" Edit Quiz" FontSize="20" Click="EditButton_Click" Margin="0,5,0,5"/>
+
+            </StackPanel>
+
+        </Border>
+        <Border Grid.Column="1" Margin="20" Background="Gray"
+                CornerRadius="15" BorderBrush="White" BorderThickness="5">
+            <ContentControl x:Name="MainContent" Margin="20"/>
+           
+        </Border>
+
+
+
+
+
+    </Grid>
+</Window>
+
