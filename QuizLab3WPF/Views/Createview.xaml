@@ -5,8 +5,104 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
              xmlns:local="clr-namespace:QuizLab3WPF.Views"
              mc:Ignorable="d" 
-             d:DesignHeight="450" d:DesignWidth="800">
-    <Grid>
-            
+             d:DesignHeight="450" d:DesignWidth="800"> 
+    
+
+    <Grid Margin="8">
+        <!-- Kolumner: vänster för input, höger för lista -->
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="20"/>
+            <ColumnDefinition Width="2*"/>
+            <ColumnDefinition Width="3*"/>
+            <ColumnDefinition Width="20"/>
+        </Grid.ColumnDefinitions>
+
+        <!-- Vänstra kolumnen -->
+        <StackPanel Grid.Column="1" Margin="0,0,14,0">
+            <TextBlock Text="Create new quiz"
+                   FontSize="28"
+                   FontWeight="Bold"
+                   Margin="0,0,0,12"/>
+
+            <!-- Fråga -->
+            <TextBlock Text="Question" />
+            <TextBox x:Name="TextStatement" Margin="0,6,0,12"/>
+
+            <!-- Svar A -->
+            <TextBlock Text="Answer A"/>
+            <TextBox x:Name="AlternativA" Margin="0,6,0,12"/>
+
+            <!-- Svar B -->
+            <TextBlock Text="Answer B"/>
+            <TextBox x:Name="AlternativB" Margin="0,6,0,12"/>
+
+            <!-- Svar C -->
+            <TextBlock Text="Answer C"/>
+            <TextBox x:Name="AlternativC" Margin="0,6,0,12"/>
+
+            <!-- Korrekt svar -->
+            <TextBlock Text="Correct Answer"/>
+            <ComboBox x:Name="CmbCorrect" Margin="0,6,0,12" SelectedIndex="0">
+                <ComboBoxItem Content="A (index 0)"/>
+                <ComboBoxItem Content="B (index 1)"/>
+                <ComboBoxItem Content="C (index 2)"/>
+            </ComboBox>
+
+            <!-- Kategori -->
+            <TextBlock Text="Category"/>
+            <TextBox x:Name="TextCatagory" Margin="0,6,0,12"/>
+
+            <!-- Bild -->
+            <TextBlock Text="Image Path"/>
+            <TextBox x:Name="TxtImagePath" Margin="0,6,0,12"/>
+
+            <!-- Knappar -->
+            <StackPanel Orientation="Horizontal" Margin="0,10,0,0">
+                <Button x:Name="AddButton" Content="Add Question" Width="120" Click="AddButton_Click"/>
+                <Button x:Name="ClearButton" Content="Clear" Width="100" Margin="8,0,0,0" Click="ClearButton_Click"/>
+                <Button x:Name="SaveButton" Content="Save" Width="90" Margin="8,0,0,0" Click="SaveButton_Click"/>
+                <Button x:Name="LoadButton" Content="Load" Width="90" Margin="8,0,0,0" Click="LoadButton_Click"/>
+            </StackPanel>
+
+            <!-- Statusrad -->
+            <TextBlock x:Name="CreateStatus"
+                   Margin="0,14,0,0"
+                   FontWeight="SemiBold"
+                   Opacity="0.9"/>
+        </StackPanel>
+
+        <!-- Högra kolumnen: lista med frågor -->
+        <Border Grid.Column="2"
+            Background="FloralWhite"
+            CornerRadius="12"
+            Padding="12"
+            BorderBrush="Aqua"
+            BorderThickness="4">
+            <DockPanel>
+                <TextBlock Text="Questions in this quiz"
+                       DockPanel.Dock="Top"
+                       FontWeight="Bold"
+                       FontSize="20"
+                       Margin="0,0,0,8"/>
+
+                <ListView x:Name="ListQuestions">
+                    <ListView.View>
+                        <GridView>
+                            <GridViewColumn Header="#" Width="40" DisplayMemberBinding="{Binding Index}"/>
+                            <GridViewColumn Header="Question" Width="200" DisplayMemberBinding="{Binding Statement}"/>
+                            <GridViewColumn Header="A" Width="100" DisplayMemberBinding="{Binding A}"/>
+                            <GridViewColumn Header="B" Width="100" DisplayMemberBinding="{Binding B}"/>
+                            <GridViewColumn Header="C" Width="100" DisplayMemberBinding="{Binding C}"/>
+                            <GridViewColumn Header="Correct" Width="80" DisplayMemberBinding="{Binding CorrectLetter}"/>
+                            <GridViewColumn Header="Category" Width="120" DisplayMemberBinding="{Binding Category}"/>
+                        </GridView>
+                    </ListView.View>
+                </ListView>
+            </DockPanel>
+        </Border>
     </Grid>
+
+
+
+
 </UserControl>

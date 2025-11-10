@@ -12,129 +12,130 @@
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="*"/>
             <RowDefinition Height="Auto"/>
-
         </Grid.RowDefinitions>
 
-        <!--RUBRIK-->
-        <TextBlock Name="TitleName" Text="Play Quiz" FontSize="30"
-                   FontWeight="Bold" Margin="12,12, 12, 12" 
-                   HorizontalAlignment="Center"/>
+        <!-- RUBRIK -->
+        <TextBlock Text="Play Quiz"
+               FontSize="30"
+               FontWeight="Bold"
+               Margin="12"
+               HorizontalAlignment="Center"/>
 
-        <!--Kort med fråga, bild och svar-->
-        <Border Grid.Row="1" Margin="16" Padding="20" 
-                CornerRadius="15" Background="Gray" 
-                BorderBrush="Aqua" BorderThickness="5">
-
+        <!-- KORT: fråga, bild, svar -->
+        <Border Grid.Row="1" Margin="16" Padding="20"
+            CornerRadius="15" Background="Gray"
+            BorderBrush="Aqua" BorderThickness="5">
             <Grid>
                 <Grid.RowDefinitions>
-                    <RowDefinition  Height="auto"/>
-                    <!--ሕቶ-->
-                    <RowDefinition  Height="200"/>
-                    <!--ስእሊ-->
-                    <RowDefinition  Height="auto"/>
-                    <!--መልሲ-->
-                    <RowDefinition  Height="auto"/>
-                    <!-- ዝስዕብ ሕቶ-->
-                    <RowDefinition  Height="auto"/>
-                    <!--ውጽኢት-->
-                    <RowDefinition  Height="*"/>
+                    <RowDefinition Height="Auto"/>
+                    <!-- Frågetext -->
+                    <RowDefinition Height="200"/>
+                    <!-- Bild -->
+                    <RowDefinition Height="Auto"/>
+                    <!-- Svar -->
+                    <RowDefinition Height="Auto"/>
+                    <!-- Next/Restart -->
+                    <RowDefinition Height="Auto"/>
+                    <!-- Status -->
+                    <RowDefinition Height="*"/>
                 </Grid.RowDefinitions>
 
-                <!--ሕቶ-->
-                <TextBlock Grid.Row="0" Text="{Binding Statement, TargetNullValue=What day is today?}"
-                           FontSize="20"
-                           FontFamily="Arial" 
-                           FontWeight="ExtraLight"
-                           TextWrapping="Wrap"/>
+                <!-- Fråga -->
+                <TextBlock Grid.Row="0"
+                       Text="{Binding Statement, TargetNullValue=What day is today?}"
+                       FontSize="20"
+                       FontFamily="Arial"
+                       TextWrapping="Wrap"/>
 
-                <!--ስእሊ-->
+                <!-- Bild -->
                 <Image x:Name="QuizImage"
-                       Grid.Row="1"
-                       Margin="0, 14"
-                       Stretch="UniformToFill"
-                       Source="{Binding ImagePath}">
-
+                   Grid.Row="1"
+                   Margin="0,14"
+                   Stretch="UniformToFill"
+                   Source="{Binding ImagePath}">
                     <Image.Style>
                         <Style TargetType="Image">
                             <Setter Property="Visibility" Value="Visible"/>
                             <Style.Triggers>
-                                <DataTrigger Binding="{Binding Source, RelativeSource={RelativeSource Self}}"
-
-                                             Value="{x:Null}">
+                                <DataTrigger Binding="{Binding Source, RelativeSource={RelativeSource Self}}" Value="{x:Null}">
                                     <Setter Property="Visibility" Value="Collapsed"/>
                                 </DataTrigger>
                             </Style.Triggers>
-
                         </Style>
                     </Image.Style>
                 </Image>
 
-                <!--Placeholder: visas bara när bilden saknas-->
-
+                <!-- Placeholder om bild saknas -->
                 <Border Grid.Row="1" CornerRadius="8" Margin="0,8,0,12"
-        Background="#EEEEEE" BorderBrush="#DDDDDD" BorderThickness="1">
+                    Background="#EEEEEE" BorderBrush="#DDDDDD" BorderThickness="1">
                     <Border.Style>
                         <Style TargetType="Border">
                             <Setter Property="Visibility" Value="Collapsed"/>
                             <Style.Triggers>
-                                <!-- Visa placeholdern när bilden är dold -->
                                 <DataTrigger Binding="{Binding ElementName=QuizImage, Path=Visibility}" Value="Collapsed">
                                     <Setter Property="Visibility" Value="Visible"/>
                                 </DataTrigger>
                             </Style.Triggers>
                         </Style>
                     </Border.Style>
-
                     <TextBlock Text="Image Holder"
-               HorizontalAlignment="Center"
-               VerticalAlignment="Center"
-               Opacity="0.9"/>
+                           HorizontalAlignment="Center"
+                           VerticalAlignment="Center"
+                           Opacity="0.9"/>
                 </Border>
 
-                            <!--Svar Alternativ-->
-                <StackPanel Grid.Row="2" Margin="0,0,0,6">                 
-                    <Button x:Name="ButtonA" Content="{Binding Answers[0]}" Margin="0,0,0,6"   Click="ButtonA_Click"/>
-                    <Button x:Name="ButtonB" Content="{Binding Answers[1]}" Margin="0,0,0,6"   Click="ButtonB_Click"/>
-                    <Button x:Name="ButtonC" Content="{Binding Answers[2]}" Margin="0,0,0,6"   Click="ButtonC_Click"/>                   
+                <!-- Svar -->
+                <StackPanel Grid.Row="2" Margin="0,0,0,6">
+                    <Button x:Name="ButtonA" Content="{Binding Answers[0]}" Margin="0,0,0,6" Click="ButtonA_Click"/>
+                    <Button x:Name="ButtonB" Content="{Binding Answers[1]}" Margin="0,0,0,6" Click="ButtonB_Click"/>
+                    <Button x:Name="ButtonC" Content="{Binding Answers[2]}" Margin="0,0,0,6" Click="ButtonC_Click"/>
                 </StackPanel>
 
-                <!--Nästa -->
-                <Button Grid.Row="3" 
-                     x:Name="NetQizutn"
-                     Content="Next Quiz"
-                     Background="Orange"
-                     HorizontalAlignment="Left"  
-                     Margin="20"
-                     Click="NetQizutn_Click"  />
-                <!--Resultat -->
-                <TextBlock x:Name="StatusText" Grid.Row="4" 
-                          
-                     Opacity="0.8" Margin="0"/> 
-                    
+                <!-- Nästa / Restart -->
+                <Grid Grid.Row="3" Margin="0,6,0,0">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
 
+                    <Button Grid.Column="0"
+                        x:Name="NetQizutn"
+                        Content="Next Quiz"
+                        Background="Orange"
+                        HorizontalAlignment="Left"
+                        Margin="0,0,8,0"
+                        Click="NetQizutn_Click"/>
 
+                    <Button Grid.Column="1"
+                        x:Name="RestartButton"
+                        Content="Restart"
+                        Background="LightGray"
+                        HorizontalAlignment="Right"
+                        Click="RestartButton_Click"/>
+                </Grid>
+
+                <!-- Status + Poäng -->
+                <StackPanel Grid.Row="4" Margin="0,8,0,0">
+                    <TextBlock x:Name="StatusText"
+                           Opacity="0.9"
+                           FontSize="18"
+                           Margin="0,0,0,4"/>
+                    <TextBlock x:Name="ScoreText"
+                           Opacity="0.9"
+                           FontSize="16"/>
+                </StackPanel>
             </Grid>
         </Border>
 
-        <DockPanel Grid.Row="2" LastChildFill="False" Margin="12, 0, 12, 12">
-            <TextBlock DockPanel.Dock="Left" Opacity="0.8">
-                
-                <Run Text="Quiz"/>
-                <Run Text="{Binding CurrentIndex, TargetNullValue=3}"/>
-                <Run Text="of"/>
-                <Run Text="{Binding TotalQuestions, TargetNullValue=10}"/>
+        <!-- Info-rad längst ner -->
+        <DockPanel Grid.Row="2" LastChildFill="False" Margin="12,0,12,12">
+            <TextBlock DockPanel.Dock="Left" Opacity="0.9">
+            <Run Text="Category: "/>
+            <Run Text="{Binding Category, TargetNullValue=General}"/>
             </TextBlock>
-
-            <TextBlock DockPanel.Dock="Left" Margin="16, 0, 0, 0"
-                       Opacity="0.8">
-                <Run Text="Category"/>
-                <Run Text="{Binding Category, TargetNullValue=General}"/>
-
-            </TextBlock>
-
         </DockPanel>
-
     </Grid>
+
 </UserControl>
 
 

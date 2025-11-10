@@ -6,7 +6,84 @@
              xmlns:local="clr-namespace:QuizLab3WPF.Views"
              mc:Ignorable="d" 
              d:DesignHeight="450" d:DesignWidth="800">
-    <Grid>
-            
+    <Grid Margin="8">
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="20"/>
+            <ColumnDefinition Width="3*"/>
+            <ColumnDefinition Width="2*"/>
+            <ColumnDefinition Width="20"/>
+        </Grid.ColumnDefinitions>
+
+        <!-- Vänster: lista med frågor -->
+        <Border Grid.Column="1"
+            Background="FloralWhite"
+            CornerRadius="12"
+            Padding="12"
+            BorderBrush="Aqua"
+            BorderThickness="4">
+            <DockPanel>
+                <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Margin="0,0,0,8">
+                    <TextBlock Text="Edit quiz – select a question to edit"
+                           FontWeight="Bold" FontSize="20" VerticalAlignment="Center"/>
+                    <StackPanel Orientation="Horizontal" Margin="12,0,0,0">
+                        <Button x:Name="LoadButton" Content="Load" Width="90" Margin="0,0,8,0" Click="LoadButton_Click"/>
+                        <Button x:Name="SaveButton" Content="Save" Width="90" Click="SaveButton_Click"/>
+                    </StackPanel>
+                </StackPanel>
+
+                <ListView x:Name="ListQuestions" SelectionChanged="ListQuestions_SelectionChanged">
+                    <ListView.View>
+                        <GridView>
+                            <GridViewColumn Header="#" Width="40" DisplayMemberBinding="{Binding Index}"/>
+                            <GridViewColumn Header="Question" Width="260" DisplayMemberBinding="{Binding Statement}"/>
+                            <GridViewColumn Header="A" Width="100" DisplayMemberBinding="{Binding A}"/>
+                            <GridViewColumn Header="B" Width="100" DisplayMemberBinding="{Binding B}"/>
+                            <GridViewColumn Header="C" Width="100" DisplayMemberBinding="{Binding C}"/>
+                            <GridViewColumn Header="Correct" Width="80" DisplayMemberBinding="{Binding CorrectLetter}"/>
+                            <GridViewColumn Header="Category" Width="120" DisplayMemberBinding="{Binding Category}"/>
+                        </GridView>
+                    </ListView.View>
+                </ListView>
+            </DockPanel>
+        </Border>
+
+        <!-- Höger: redigeringsformulär -->
+        <StackPanel Grid.Column="2" Margin="12,0,0,0">
+            <TextBlock Text="Selected question" FontSize="18" FontWeight="Bold" Margin="0,0,0,12"/>
+
+            <TextBlock Text="Question"/>
+            <TextBox x:Name="TextStatement" Margin="0,6,0,12"/>
+
+            <TextBlock Text="Answer A"/>
+            <TextBox x:Name="AlternativA" Margin="0,6,0,12"/>
+
+            <TextBlock Text="Answer B"/>
+            <TextBox x:Name="AlternativB" Margin="0,6,0,12"/>
+
+            <TextBlock Text="Answer C"/>
+            <TextBox x:Name="AlternativC" Margin="0,6,0,12"/>
+
+            <TextBlock Text="Correct Answer"/>
+            <ComboBox x:Name="CmbCorrect" Margin="0,6,0,12" SelectedIndex="0">
+                <ComboBoxItem Content="A (index 0)"/>
+                <ComboBoxItem Content="B (index 1)"/>
+                <ComboBoxItem Content="C (index 2)"/>
+            </ComboBox>
+
+            <TextBlock Text="Category"/>
+            <TextBox x:Name="TextCatagory" Margin="0,6,0,12"/>
+
+            <TextBlock Text="Image Path"/>
+            <TextBox x:Name="TxtImagePath" Margin="0,6,0,12"/>
+
+            <StackPanel Orientation="Horizontal" Margin="0,8,0,0">
+                <Button x:Name="UpdateButton" Content="Update" Width="100" Click="UpdateButton_Click"/>
+                <Button x:Name="DeleteButton" Content="Delete" Width="100" Margin="8,0,0,0" Click="DeleteButton_Click"/>
+                <Button x:Name="ClearButton" Content="Clear" Width="90" Margin="8,0,0,0" Click="ClearButton_Click"/>
+            </StackPanel>
+
+            <TextBlock x:Name="EditStatus" Margin="0,12,0,0" Opacity="0.9"/>
+        </StackPanel>
     </Grid>
+
 </UserControl>
