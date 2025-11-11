@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text.Json;
+using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
 using QuizLab3WPF.DataModels;
@@ -11,89 +12,147 @@ namespace QuizLab3WPF.Views
 {
     public partial class PlayView : UserControl
     {
-        // Fält
-        private List<Question> questions;
-        private Question current;
-        private int index;
-        private int correct = 0;
-        private int asked = 0;
-        private bool answeredThisQuestion = false;
+     
+        private List<Question> _allQuestions = new List<Question>();    
+        private List<Question> _questions = new List<Question>();
+        private Question _current;
+        private int _index = 0;
+        private int _correct = 0;
+        private int _asked = 0;
+        private bool _answeredThisQuestion = false;
 
         public PlayView()
         {
             InitializeComponent();
-
-            // 1) Ladda frågor från fil (fallback till exempel)
-            if (!TryLoadQuestionsFromFile())
-            {
-                questions = new List<Question>
-                {
-                    new Question("Vilken färg har himlen?", 0, "Blå", "Röd", "Grön")
-                    { Category = "Natur", ImagePath = "/Images/ABC.png" },
-
-                    new Question("2 + 2 = ?", 1, "3", "4", "5")
-                    { Category = "Matematik", ImagePath = "/Images/BCD.png" },
-
-                    new Question("Huvudstad i Sverige?", 0, "Stockholm", "Oslo", "Köpenhamn")
-                    { Category = "Geografi", ImagePath = "/Images/CDE.png" }
-                };
-            }
-
-            // 2) Slumpa ordningen
-            var random = new Random();
-            questions = questions.OrderBy(q => random.Next()).ToList();
-
-            // 3) Starta
-            index = 0;
-            ShowQuestion();
+            this.Loaded += PlayView_Loaded;
+            SetButtonsEnabled(false);
+            NetQizutn.IsEnabled = false;
         }
 
-        // === Filhjälp ===
-        private static string GetQuizFilePath()
+       
+        private async void PlayView_Loaded(object sender, RoutedEventArgs e)
         {
-            string appDir = Path.Combine(
-                Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-                "QuizLab3WPF");
-            Directory.CreateDirectory(appDir);
-            return Path.Combine(appDir, "quiz.json");
-        }
+      
+            await LoadQuestionsAsync();
+            FillCategoryCombo();    
+            if (CategoryCombo.Items.Count > 0)
+                CategoryCombo.SelectedIndex = 0;
+            StatusText.Text = "Choose category.";        }
 
-        private bool TryLoadQuestionsFromFile()
+    
+        private async Task LoadQuestionsAsync()
         {
             try
             {
                 string path = GetQuizFilePath();
-                if (!File.Exists(path)) return false;
+                if (!File.Exists(path))
+                {
+                    
+                    _allQuestions = new List<Question>
+                    {
+                        new Question("Which coloor has sky", 0, "Blue", "Red", "Green")
+                        { Category = "Nature", ImagePath = "/Images/sky.jpg" },
 
-                string json = File.ReadAllText(path);
-                var loaded = JsonSerializer.Deserialize<List<Question>>(json);
-                if (loaded == null || loaded.Count == 0) return false;
+                        new Question("2 + 2 = ?", 1, "3", "4", "5")
+                        { Category = "Math", ImagePath = "/Images/math.jpg" },
 
-                questions = loaded;
-                return true;
+                        new Question("What is Capital city of sweden?", 0, "Stockholm", "Oslo", "Paris")
+                        { Category = "Geography", ImagePath = "/Images/sthlm.jpg" }
+                    };
+                    return;
+                }
+
+                await using var fs = File.OpenRead(path);
+                var loaded = await JsonSerializer.DeserializeAsync<List<Question>>(fs);
+
+                _allQuestions = loaded ?? new List<Question>();
+                if (_allQuestions.Count == 0)
+                {
+                    StatusText.Text = "There is not questions in this file.";
+                    _allQuestions = new List<Question>
+                    {
+                           new Question("Which coloor has sky", 0, "Blue", "Red", "Green")
+                        { Category = "Nature", ImagePath = "/Images/sky.png" },
+
+                         new Question("2 + 2 = ?", 1, "3", "4", "5")
+                        { Category = "Math", ImagePath = "/Images/math.png" },
+                    };
+                }
             }
-            catch
+            catch (Exception ex)
             {
-                return false;
+                StatusText.Text = $"Could not read the file ({ex.Message})";
+                _allQuestions = new List<Question>
+                {
+                    new Question("Exempel question: 1+1?", 1, "1", "2", "3") { Category = "Demo" }
+                };
             }
         }
 
-        // === Visa fråga ===
+        private void FillCategoryCombo()
+        {
+            var items = new List<string> { "All" };
+
+            var cats = _allQuestions
+                .Select(q => q?.Category ?? "")
+                .Where(s => !string.IsNullOrWhiteSpace(s))
+                .Distinct()
+                .OrderBy(s => s)
+                .ToList();
+
+            items.AddRange(cats);
+
+            CategoryCombo.ItemsSource = items;
+        }
+
+        private void StartButton_Click(object sender, RoutedEventArgs e)
+        {
+            string selected = CategoryCombo.SelectedItem as string ?? "All";
+
+    
+            if (selected == "All")
+                _questions = _allQuestions.ToList();
+            else
+                _questions = _allQuestions.Where(q => string.Equals(q.Category, selected, StringComparison.OrdinalIgnoreCase)).ToList();
+
+            if (_questions.Count == 0)
+            {
+                StatusText.Text = "There is no questions on this categotry.";
+                SetButtonsEnabled(false);
+                NetQizutn.IsEnabled = false;
+                this.DataContext = null;
+                return;
+            }
+
+            var rnd = new Random();
+            _questions = _questions.OrderBy(_ => rnd.Next()).ToList();
+
+            _index = 0;
+            _correct = 0;
+            _asked = 0;
+
+            ShowQuestion();
+        }
+
+  
         private void ShowQuestion()
         {
-            current = questions[index];
-            this.DataContext = current;
+            _current = _questions[_index];
+            this.DataContext = _current;
 
-            answeredThisQuestion = false;
-            if (StatusText != null) StatusText.Text = string.Empty;
+            _answeredThisQuestion = false;
+
+     
+            NetQizutn.IsEnabled = false;
+
 
             SetButtonsEnabled(true);
-            NetQizutn.IsEnabled = true;
 
+
+            StatusText.Text = "";
             UpdateScoreText();
         }
 
-        // === Hjälpmetoder ===
         private void SetButtonsEnabled(bool enabled)
         {
             ButtonA.IsEnabled = enabled;
@@ -103,52 +162,53 @@ namespace QuizLab3WPF.Views
 
         private void UpdateScoreText()
         {
-            int percent = asked == 0 ? 0 : (int)Math.Round(100.0 * correct / asked);
-            if (ScoreText != null)
-                ScoreText.Text = $"Rätt: {correct}/{asked} ({percent}%)";
+            int percent = _asked == 0 ? 0 : (int)Math.Round(100.0 * _correct / _asked);
+            ScoreText.Text = $"Right: {_correct}/{_asked} ({percent}%)";
         }
 
-        // === Svarshantering ===
+  
         private void Answer(int chosenIndex)
         {
-            if (answeredThisQuestion) return;
-            if (current == null || current.Answers == null || current.Answers.Length == 0) return;
+            if (_answeredThisQuestion) return;
+            if (_current == null || _current.Answers == null || _current.Answers.Length < 3) return;
 
-            asked++;
-            answeredThisQuestion = true;
+            _asked++;
+            _answeredThisQuestion = true;
+
             SetButtonsEnabled(false);
 
-            if (current.IsCorrect(chosenIndex))
+            if (_current.IsCorrect(chosenIndex))
             {
-                correct++;
-                StatusText.Text = "Rätt! 👍";
+                _correct++;
+                StatusText.Text = "Right!!!!!!";
             }
             else
             {
-                string right = current.Answers[current.CorrectAnswer];
-                StatusText.Text = $"Fel. Rätt svar: {right}";
+                string right = _current.Answers[_current.CorrectAnswer];
+                StatusText.Text = $"Wrong. Right Answer: {right}";
             }
 
             UpdateScoreText();
+
+  
+            NetQizutn.IsEnabled = true;
         }
 
-        // Klick-händelser (måste matcha XAML)
         private void ButtonA_Click(object sender, RoutedEventArgs e) => Answer(0);
         private void ButtonB_Click(object sender, RoutedEventArgs e) => Answer(1);
         private void ButtonC_Click(object sender, RoutedEventArgs e) => Answer(2);
 
-        // === Next ===
         private void NetQizutn_Click(object sender, RoutedEventArgs e)
         {
-            index++;
+            _index++;
 
-            if (index >= questions.Count)
+            if (_index >= _questions.Count)
             {
-                int percent = asked == 0 ? 0 : (int)Math.Round(100.0 * correct / asked);
-                string msg = $"🎉 Du är klar med quizet!\n\nPoäng: {correct}/{asked}\nProcent: {percent}%";
-                MessageBox.Show(msg, "Resultat", MessageBoxButton.OK, MessageBoxImage.Information);
+                int percent = _asked == 0 ? 0 : (int)Math.Round(100.0 * _correct / _asked);
+                string msg = $"You are done!\n\npoints: {_correct}/{_asked}\nPercent: {percent}%";
+                MessageBox.Show(msg, "Result", MessageBoxButton.OK, MessageBoxImage.Information);
 
-                StatusText.Text = $"🎉 Du är klar med quizet! Poäng: {correct}/{asked} ({percent}%)";
+                
                 NetQizutn.IsEnabled = false;
                 SetButtonsEnabled(false);
                 return;
@@ -157,27 +217,35 @@ namespace QuizLab3WPF.Views
             ShowQuestion();
         }
 
-        // === Restart ===
         private void RestartButton_Click(object sender, RoutedEventArgs e)
         {
-            ResetQuiz();
-        }
+            if (_questions.Count == 0)
+            {
+                StatusText.Text = "Chose category and start the quiz.";
+                return;
+            }
 
-        private void ResetQuiz()
-        {
-            correct = 0;
-            asked = 0;
-            index = 0;
+         
+            var rnd = new Random();
+            _questions = _questions.OrderBy(_ => rnd.Next()).ToList();
 
-            // blanda om igen vid omstart
-            var random = new Random();
-            questions = questions.OrderBy(q => random.Next()).ToList();
-
-            NetQizutn.IsEnabled = true;
-            SetButtonsEnabled(true);
-            if (StatusText != null) StatusText.Text = string.Empty;
+            _index = 0;
+            _correct = 0;
+            _asked = 0;
 
             ShowQuestion();
         }
+
+ 
+        private static string GetQuizFilePath()
+        {
+            string appDir = Path.Combine(
+                Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+                "QuizLab3WPF");
+            Directory.CreateDirectory(appDir);
+            return Path.Combine(appDir, "quiz.json");
+        }
+
+        
     }
 }

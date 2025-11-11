@@ -14,7 +14,7 @@
             <ColumnDefinition Width="20"/>
         </Grid.ColumnDefinitions>
 
-        <!-- Vänster: lista med frågor -->
+       
         <Border Grid.Column="1"
             Background="FloralWhite"
             CornerRadius="12"
@@ -47,7 +47,7 @@
             </DockPanel>
         </Border>
 
-        <!-- Höger: redigeringsformulär -->
+        
         <StackPanel Grid.Column="2" Margin="12,0,0,0">
             <TextBlock Text="Selected question" FontSize="18" FontWeight="Bold" Margin="0,0,0,12"/>
 

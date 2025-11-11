@@ -2,6 +2,7 @@
 using System.Collections.ObjectModel;
 using System.IO;
 using System.Text.Json;
+using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
 using QuizLab3WPF.DataModels;
@@ -10,7 +11,6 @@ namespace QuizLab3WPF.Views
 {
     public partial class Createview : UserControl
     {
-        // Klass för ListView-rader (visar frågorna snyggt)
         private class QuestionRow
         {
             public int Index { get; set; }
@@ -22,21 +22,25 @@ namespace QuizLab3WPF.Views
             public string Category { get; set; } = "";
         }
 
-        // Lista med riktiga frågor (för sparning)
-        private readonly ObservableCollection<Question> questions = new();
-
-        // Lista för visning i UI
-        private readonly ObservableCollection<QuestionRow> rows = new();
-
-        private readonly string savePath = "quizdata.json"; // Fil att spara i
+        private readonly ObservableCollection<Question> _questions = new();
+        private readonly ObservableCollection<QuestionRow> _rows = new();
 
         public Createview()
         {
             InitializeComponent();
-            ListQuestions.ItemsSource = rows;
+            ListQuestions.ItemsSource = _rows;
         }
 
-        // När användaren trycker "Add Question"
+        private static string GetQuizFilePath()
+        {
+            string appDir = Path.Combine(
+                Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+                "QuizLab3WPF");
+            Directory.CreateDirectory(appDir);
+            return Path.Combine(appDir, "quiz.json");
+        }
+
+   
         private void AddButton_Click(object sender, RoutedEventArgs e)
         {
             string statement = TextStatement.Text?.Trim() ?? "";
@@ -47,36 +51,38 @@ namespace QuizLab3WPF.Views
             string imagePath = TxtImagePath.Text?.Trim() ?? "";
             int correctIndex = CmbCorrect.SelectedIndex;
 
-            // Validering
             if (string.IsNullOrWhiteSpace(statement))
             {
-                CreateStatus.Text = "⚠️ Write a question text!";
+                CreateStatus.Text = "Please write a question.";
                 TextStatement.Focus();
                 return;
             }
+
             if (string.IsNullOrWhiteSpace(a) || string.IsNullOrWhiteSpace(b) || string.IsNullOrWhiteSpace(c))
             {
-                CreateStatus.Text = "⚠️ Enter all three answers (A, B, C).";
-                return;
-            }
-            if (correctIndex < 0 || correctIndex > 2)
-            {
-                CreateStatus.Text = "⚠️ Choose a correct answer.";
+                CreateStatus.Text = "You must fill 3 answers";
                 return;
             }
 
-            // Skapa fråga
+            if (correctIndex < 0 || correctIndex > 2)
+            {
+                CreateStatus.Text = "Choose whicj´h answer is correct";
+                return;
+            }
+
+     
             var q = new Question(statement, correctIndex, a, b, c)
             {
                 Category = string.IsNullOrWhiteSpace(category) ? null : category,
                 ImagePath = string.IsNullOrWhiteSpace(imagePath) ? null : imagePath
             };
 
-            // Lägg till listor
-            questions.Add(q);
-            rows.Add(new QuestionRow
+            _questions.Add(q);
+
+       
+            _rows.Add(new QuestionRow
             {
-                Index = rows.Count + 1,
+                Index = _rows.Count + 1,
                 Statement = statement,
                 A = a,
                 B = b,
@@ -86,14 +92,13 @@ namespace QuizLab3WPF.Views
             });
 
             ClearInputs();
-            CreateStatus.Text = "✅ The question has been added.";
+            CreateStatus.Text = "Question added to the list.";
         }
 
-        // När användaren trycker "Clear"
         private void ClearButton_Click(object sender, RoutedEventArgs e)
         {
             ClearInputs();
-            CreateStatus.Text = "Cleared.";
+            CreateStatus.Text = "Cleared";
         }
 
         private void ClearInputs()
@@ -108,68 +113,75 @@ namespace QuizLab3WPF.Views
             TextStatement.Focus();
         }
 
-        // --- SPARA till fil ---
-        private void SaveButton_Click(object sender, RoutedEventArgs e)
+        private async void SaveButton_Click(object sender, RoutedEventArgs e)
         {
             try
             {
+                string path = GetQuizFilePath();
                 var options = new JsonSerializerOptions { WriteIndented = true };
-                string json = JsonSerializer.Serialize(questions, options);
-                File.WriteAllText(savePath, json);
 
-                CreateStatus.Text = $"💾 Saved {questions.Count} questions to file.";
+                CreateStatus.Text = "Saving.";
+                await using var fs = File.Create(path);
+                await JsonSerializer.SerializeAsync(fs, _questions, options);
+
+                CreateStatus.Text = $"Saved  {_questions.Count} questions.";
             }
             catch (Exception ex)
             {
-                CreateStatus.Text = $"❌ Error saving file: {ex.Message}";
+                CreateStatus.Text = $"save failed {ex.Message}";
             }
         }
 
-        // --- LADDA från fil ---
-        private void LoadButton_Click(object sender, RoutedEventArgs e)
+     
+        private async void LoadButton_Click(object sender, RoutedEventArgs e)
         {
             try
             {
-                if (!File.Exists(savePath))
+                string path = GetQuizFilePath();
+                if (!File.Exists(path))
                 {
-                    CreateStatus.Text = "⚠️ No saved file found.";
+                    CreateStatus.Text = "ℹ️ No file found.";
                     return;
                 }
 
-                string json = File.ReadAllText(savePath);
-                var loaded = JsonSerializer.Deserialize<ObservableCollection<Question>>(json);
+                CreateStatus.Text = "📥 Loading...";
+                await using var fs = File.OpenRead(path);
+                var loaded = await JsonSerializer.DeserializeAsync<ObservableCollection<Question>>(fs);
 
-                if (loaded == null)
+                _questions.Clear();
+                _rows.Clear();
+
+                if (loaded == null || loaded.Count == 0)
                 {
-                    CreateStatus.Text = "⚠️ File empty or invalid.";
+                    CreateStatus.Text = "No question founded in the fail.";
                     return;
                 }
-
-                questions.Clear();
-                rows.Clear();
 
                 int i = 1;
                 foreach (var q in loaded)
                 {
-                    questions.Add(q);
-                    rows.Add(new QuestionRow
+                    _questions.Add(q);
+                    var a0 = q.Answers?.Length > 0 ? q.Answers[0] : "";
+                    var a1 = q.Answers?.Length > 1 ? q.Answers[1] : "";
+                    var a2 = q.Answers?.Length > 2 ? q.Answers[2] : "";
+
+                    _rows.Add(new QuestionRow
                     {
                         Index = i++,
-                        Statement = q.Statement,
-                        A = q.Answers[0],
-                        B = q.Answers[1],
-                        C = q.Answers[2],
-                        CorrectLetter = q.CorrectAnswer == 0 ? "A" :
-                                        q.CorrectAnswer == 1 ? "B" : "C",
+                        Statement = q.Statement ?? "",
+                        A = a0,
+                        B = a1,
+                        C = a2,
+                        CorrectLetter = q.CorrectAnswer == 0 ? "A" : q.CorrectAnswer == 1 ? "B" : "C",
                         Category = q.Category ?? ""
                     });
                 }
 
-                CreateStatus.Text = $"📂 Loaded {questions.Count} questions from file.";
+                CreateStatus.Text = $" Loaded  {_questions.Count} questions.";
             }
             catch (Exception ex)
             {
-                CreateStatus.Text = $"❌ Error loading file: {ex.Message}";
+                CreateStatus.Text = $" Load failed: {ex.Message}";
             }
         }
     }

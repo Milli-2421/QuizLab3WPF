@@ -9,12 +9,22 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <None Remove="Images\ABC.png" />
+    <None Remove="Images\London.jpg" />
+    <None Remove="Images\math.jpg" />
+    <None Remove="Images\sky.jpg" />
+    <None Remove="Images\sthlm.jpg" />
   </ItemGroup>
 
   <ItemGroup>
-    <Resource Include="Images\ABC.png">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    <Resource Include="Images\London.jpg">
+      <CopyToOutputDirectory>Never</CopyToOutputDirectory>
+    </Resource>
+    <Resource Include="Images\math.jpg">
+      <CopyToOutputDirectory>Never</CopyToOutputDirectory>
+    </Resource>
+    <Resource Include="Images\sky.jpg" />
+    <Resource Include="Images\sthlm.jpg">
+      <CopyToOutputDirectory>Never</CopyToOutputDirectory>
     </Resource>
   </ItemGroup>
 

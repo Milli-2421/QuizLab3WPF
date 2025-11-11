@@ -2,6 +2,7 @@
 using System.Collections.ObjectModel;
 using System.IO;
 using System.Text.Json;
+using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
 using QuizLab3WPF.DataModels;
@@ -10,7 +11,7 @@ namespace QuizLab3WPF.Views
 {
     public partial class EditView : UserControl
     {
-        // Visningsmodell för listan (en rad per fråga)
+      
         private class QuestionRow
         {
             public int Index { get; set; }
@@ -22,17 +23,20 @@ namespace QuizLab3WPF.Views
             public string Category { get; set; } = "";
         }
 
-        // Data i minnet
-        private readonly ObservableCollection<Question> questions = new();
-        private readonly ObservableCollection<QuestionRow> rows = new();
+ 
+        private readonly ObservableCollection<Question> _questions = new();
+        private readonly ObservableCollection<QuestionRow> _rows = new();
 
         public EditView()
         {
             InitializeComponent();
-            ListQuestions.ItemsSource = rows;
+            ListQuestions.ItemsSource = _rows;
+
+
+            SetEditButtonsEnabled(false);
         }
 
-        // === Filväg: samma som PlayView/CreateView ===
+  
         private static string GetQuizFilePath()
         {
             string appDir = Path.Combine(
@@ -42,83 +46,92 @@ namespace QuizLab3WPF.Views
             return Path.Combine(appDir, "quiz.json");
         }
 
-        // === Ladda från fil ===
-        private void LoadButton_Click(object sender, RoutedEventArgs e)
+      
+        private async void LoadButton_Click(object sender, RoutedEventArgs e)
         {
             try
             {
                 string path = GetQuizFilePath();
                 if (!File.Exists(path))
                 {
-                    EditStatus.Text = "ℹ️ No file found.";
+                    EditStatus.Text = "No file found";
                     return;
                 }
 
-                string json = File.ReadAllText(path);
-                var loaded = JsonSerializer.Deserialize<ObservableCollection<Question>>(json);
+                EditStatus.Text = "Loading.";
+                await using var fs = File.OpenRead(path);
+                var loaded = await JsonSerializer.DeserializeAsync<ObservableCollection<Question>>(fs);
+
+                _questions.Clear();
+                _rows.Clear();
 
                 if (loaded is null || loaded.Count == 0)
                 {
-                    EditStatus.Text = "ℹ️ File empty.";
+                    EditStatus.Text = "File Empty.";
                     return;
                 }
-
-                questions.Clear();
-                rows.Clear();
 
                 int i = 1;
                 foreach (var q in loaded)
                 {
-                    questions.Add(q);
-                    rows.Add(new QuestionRow
+                    // säkra tomma fält
+                    var a0 = q.Answers != null && q.Answers.Length > 0 ? q.Answers[0] : "";
+                    var a1 = q.Answers != null && q.Answers.Length > 1 ? q.Answers[1] : "";
+                    var a2 = q.Answers != null && q.Answers.Length > 2 ? q.Answers[2] : "";
+
+                    _questions.Add(q);
+                    _rows.Add(new QuestionRow
                     {
                         Index = i++,
                         Statement = q.Statement ?? "",
-                        A = q.Answers != null && q.Answers.Length > 0 ? q.Answers[0] : "",
-                        B = q.Answers != null && q.Answers.Length > 1 ? q.Answers[1] : "",
-                        C = q.Answers != null && q.Answers.Length > 2 ? q.Answers[2] : "",
+                        A = a0,
+                        B = a1,
+                        C = a2,
                         CorrectLetter = q.CorrectAnswer == 0 ? "A" : q.CorrectAnswer == 1 ? "B" : "C",
                         Category = q.Category ?? ""
                     });
                 }
 
                 ClearForm();
-                EditStatus.Text = $"📥 Loaded {questions.Count} questions.";
+                EditStatus.Text = $" Loaded {_questions.Count} questions.";
             }
             catch (Exception ex)
             {
-                EditStatus.Text = $"❌ Load failed: {ex.Message}";
+                EditStatus.Text = $"Load Faild: {ex.Message}";
             }
         }
 
-        // === Spara till fil ===
-        private void SaveButton_Click(object sender, RoutedEventArgs e)
+ 
+        private async void SaveButton_Click(object sender, RoutedEventArgs e)
         {
             try
             {
                 string path = GetQuizFilePath();
                 var options = new JsonSerializerOptions { WriteIndented = true };
-                string json = JsonSerializer.Serialize(questions, options);
-                File.WriteAllText(path, json);
 
-                EditStatus.Text = $"💾 Saved {questions.Count} questions.";
+                EditStatus.Text = "Saving.";
+                await using var fs = File.Create(path);
+                await JsonSerializer.SerializeAsync(fs, _questions, options);
+
+                EditStatus.Text = $" Saved {_questions.Count} questions.";
             }
             catch (Exception ex)
             {
-                EditStatus.Text = $"❌ Save failed: {ex.Message}";
+                EditStatus.Text = $" Save Failed: {ex.Message}";
             }
         }
 
-        // === Välj fråga i listan => fyll formuläret ===
+       
         private void ListQuestions_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
-            if (ListQuestions.SelectedIndex < 0 || ListQuestions.SelectedIndex >= questions.Count)
+            if (ListQuestions.SelectedIndex < 0 || ListQuestions.SelectedIndex >= _questions.Count)
             {
                 ClearForm();
+                SetEditButtonsEnabled(false);
                 return;
             }
 
-            var q = questions[ListQuestions.SelectedIndex];
+            var q = _questions[ListQuestions.SelectedIndex];
             TextStatement.Text = q.Statement ?? "";
             AlternativA.Text = q.Answers != null && q.Answers.Length > 0 ? q.Answers[0] : "";
             AlternativB.Text = q.Answers != null && q.Answers.Length > 1 ? q.Answers[1] : "";
@@ -127,16 +140,17 @@ namespace QuizLab3WPF.Views
             TextCatagory.Text = q.Category ?? "";
             TxtImagePath.Text = q.ImagePath ?? "";
 
-            EditStatus.Text = "✏️ Edit mode: change fields then click Update.";
+            SetEditButtonsEnabled(true);
+            EditStatus.Text = " Edit mode: change fields, then click Update.";
         }
 
-        // === Uppdatera vald fråga ===
+ 
         private void UpdateButton_Click(object sender, RoutedEventArgs e)
         {
             int i = ListQuestions.SelectedIndex;
-            if (i < 0 || i >= questions.Count)
+            if (i < 0 || i >= _questions.Count)
             {
-                EditStatus.Text = "ℹ️ Select a question first.";
+                EditStatus.Text = "Select a question first.";
                 return;
             }
 
@@ -154,20 +168,18 @@ namespace QuizLab3WPF.Views
                 string.IsNullOrWhiteSpace(c) ||
                 correctIndex < 0 || correctIndex > 2)
             {
-                EditStatus.Text = "⚠️ Fill all fields (A/B/C) and choose correct answer.";
+                EditStatus.Text = "Fill all fildes and choose the corect answer";
                 return;
             }
 
-            // Uppdatera data
-            var q = questions[i];
+            var q = _questions[i];
             q.Statement = statement;
             q.CorrectAnswer = correctIndex;
             q.Answers = new[] { a, b, c };
             q.Category = string.IsNullOrWhiteSpace(category) ? null : category;
             q.ImagePath = string.IsNullOrWhiteSpace(imagePath) ? null : imagePath;
 
-            // Uppdatera visningsraden
-            rows[i] = new QuestionRow
+            _rows[i] = new QuestionRow
             {
                 Index = i + 1,
                 Statement = statement,
@@ -178,35 +190,39 @@ namespace QuizLab3WPF.Views
                 Category = category
             };
 
-            EditStatus.Text = "✅ Question updated. Don’t forget to Save.";
+            EditStatus.Text = "Question Updated (Don't forget to save) ";
         }
 
-        // === Ta bort vald fråga ===
+ 
         private void DeleteButton_Click(object sender, RoutedEventArgs e)
         {
             int i = ListQuestions.SelectedIndex;
-            if (i < 0 || i >= questions.Count)
+            if (i < 0 || i >= _questions.Count)
             {
-                EditStatus.Text = "ℹ️ Select a question to delete.";
+                EditStatus.Text = "Select a question  be  deleted.";
                 return;
             }
 
-            if (MessageBox.Show("Delete selected question?", "Confirm",
+            if (MessageBox.Show("Do you want to delete selected questions?", "Confrim",
                 MessageBoxButton.YesNo, MessageBoxImage.Warning) != MessageBoxResult.Yes)
                 return;
 
-            questions.RemoveAt(i);
-            rows.RemoveAt(i);
+            _questions.RemoveAt(i);
+            _rows.RemoveAt(i);
 
-            // Re-indexera
-            for (int k = 0; k < rows.Count; k++) rows[k].Index = k + 1;
+            for (int k = 0; k < _rows.Count; k++) _rows[k].Index = k + 1;
 
             ClearForm();
-            EditStatus.Text = "🗑️ Question deleted. Save to keep changes.";
+            SetEditButtonsEnabled(false);
+            EditStatus.Text = "Question Delted (Don't forget to save).";
         }
 
-        // === Rensa formuläret ===
-        private void ClearButton_Click(object sender, RoutedEventArgs e) => ClearForm();
+      
+        private void ClearButton_Click(object sender, RoutedEventArgs e)
+        {
+            ClearForm();
+            SetEditButtonsEnabled(ListQuestions.SelectedIndex >= 0);
+        }
 
         private void ClearForm()
         {
@@ -217,7 +233,12 @@ namespace QuizLab3WPF.Views
             CmbCorrect.SelectedIndex = 0;
             TextCatagory.Text = "";
             TxtImagePath.Text = "";
-            ListQuestions.SelectedIndex = -1;
+        }
+
+        private void SetEditButtonsEnabled(bool enabled)
+        {
+            UpdateButton.IsEnabled = enabled;
+            DeleteButton.IsEnabled = enabled;
         }
     }
 }

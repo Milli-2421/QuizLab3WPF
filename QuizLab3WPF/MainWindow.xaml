@@ -7,34 +7,43 @@
         mc:Ignorable="d"
         Title="MainWindow" Height="450" Width="800"
         Background="Aqua">
-    <Grid>
+    
+    
+        <Grid>
+            <!--COLOMUN DIVIDING-->
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="300" />
+                <ColumnDefinition Width="*"/>
+            </Grid.ColumnDefinitions>
+            <Border Grid.Column="0" Margin="20" Background="Gray" CornerRadius="16" BorderBrush="White" BorderThickness="1">
+                <StackPanel Margin="20">
+                    <TextBlock x:Name="MenuName" Text="Menu" FontSize="30" VerticalAlignment="Center" HorizontalAlignment="Center" FontWeight="Bold"/>
+                    <Button x:Name="PlayButton" Content="Play Quiz" FontSize="20" Click="PlayButton_Click_1" Margin="0, 6"/>
+                    <Button x:Name="CreatButton" Content="Create Quiz" FontSize="20" Click="CreatButton_Click_1" Margin="0, 6"/>
+                    <Button x:Name="EditButton" Content="Edit Quiz" FontSize="20" Click="EditButton_Click_1"  Margin="0, 6"/>
+                </StackPanel>
 
-        <!-- column Dividing -->
-        <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="300"/>
-            <ColumnDefinition Width="*"/>
+            </Border>
+            <Border Grid.Column="1" Margin="20" Background="Gray" CornerRadius="16" BorderBrush="White" BorderThickness="1">
+                <ContentControl x:Name="MainContent" Margin="20"/>
 
-        </Grid.ColumnDefinitions>
-        <Border Grid.Column="0" Margin="20" Background="Gray" CornerRadius="15" BorderBrush="White" BorderThickness="5">
-            <StackPanel Margin="20" >
-                <TextBlock Name="MenuName" Text="Menu" FontSize="30" VerticalAlignment="Center" HorizontalAlignment="Center" FontWeight="Bold"/>
-                <Button Name="PlayButton" Content="Play Quiz" FontSize="20" Click="PlayButton_Click" Margin="0,5,0,5"/>
-                <Button Name="CreatButton" Content=" Create Quiz" FontSize="20" Click="CreatButton_Click" Margin="0,5,0,5"/>
-                <Button Name="EditButton" Content=" Edit Quiz" FontSize="20" Click="EditButton_Click" Margin="0,5,0,5"/>
-
-            </StackPanel>
-
-        </Border>
-        <Border Grid.Column="1" Margin="20" Background="Gray"
-                CornerRadius="15" BorderBrush="White" BorderThickness="5">
-            <ContentControl x:Name="MainContent" Margin="20"/>
-           
-        </Border>
-
-
-
-
-
+            </Border>
     </Grid>
 </Window>
+
+
+
+
+
+
+       
+               
+
+           
+
+       
+
+
+
+
 

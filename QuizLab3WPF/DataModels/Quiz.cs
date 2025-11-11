@@ -6,40 +6,57 @@ namespace QuizLab3WPF.DataModels
 {
     internal class Quiz
     {
-        private readonly List<Question> _questionList = new();
+        private IEnumerable<Question> _questions;
         private string _title = string.Empty;
-
-        public IEnumerable<Question> Questions => _questionList;
+        public IEnumerable<Question> Questions => _questions;
         public string Title => _title;
 
         public Quiz()
         {
-            _questionList = new List<Question>();
+            _questions = new List<Question>();
         }
 
         public Question GetRandomQuestion()
         {
-            // throw new NotImplementedException("A random Question needs to be returned here!");
-            if (_questionList.Count == 0)
-                throw new InvalidOperationException("No questions in quiz!");
+            var list = (_questions as List<Question>) ?? new List<Question>(_questions);
 
-            Random rnd = new Random();
-            int i = rnd.Next(_questionList.Count);
-            return _questionList[i];
+            if (list.Count == 0)
+                throw new InvalidOperationException("No questions available.");
+
+            var rnd = new Random();
+            int i = rnd.Next(list.Count);
+            return list[i];
         }
 
         public void AddQuestion(string statement, int correctAnswer, params string[] answers)
         {
-            // throw new NotImplementedException("Question need to be instantiated and added to list of questions here!");
+            if (string.IsNullOrWhiteSpace(statement))
+                throw new ArgumentException("Statement cannot be empty.", nameof(statement));
+
+            if (answers == null || answers.Length == 0)
+                throw new ArgumentException("Provide at least one answer.", nameof(answers));
+
             var q = new Question(statement, correctAnswer, answers);
-            _questionList.Add(q);
+
+            if (_questions is List<Question> list)
+            {
+                list.Add(q);
+            }
+            else
+            {
+                _questions = new List<Question>(_questions) { q };
+            }
         }
 
         public void RemoveQuestion(int index)
         {
-            // throw new NotImplementedException("Question at requested index need to be removed here!");
-            if (index >= 0 && index < _questionList.Count)
-                _questionList.RemoveAt(index);
+            var list = (_questions as List<Question>) ?? new List<Question>(_questions);
+
+            if (index < 0 || index >= list.Count)
+                throw new ArgumentOutOfRangeException(nameof(index), "Invalid question index.");
+
+            list.RemoveAt(index);
+            _questions = list;
         }
     }
 }
